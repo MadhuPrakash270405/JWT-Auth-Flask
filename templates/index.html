@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JWT Auth Demo</title>
+  </head>
+  <body>
+    <h2>User Registration</h2>
+    <form id="registrationForm">
+      Username: <input type="text" id="registerUsername" /><br />
+      Password: <input type="password" id="registerPassword" /><br />
+      <button type="button" onclick="registerUser()">Register</button>
+    </form>
+
+    <h2>User Login</h2>
+    <form id="loginForm">
+      Username: <input type="text" id="loginUsername" /><br />
+      Password: <input type="password" id="loginPassword" /><br />
+      <button type="button" onclick="loginUser()">Login</button>
+    </form>
+
+    <h2>Protected Resource</h2>
+    <button type="button" onclick="getProtected()">
+      Get Protected Resource
+    </button>
+    <p id="protectedResponse"></p>
+
+    <script>
+      const apiUrl = "http://127.0.0.1:5000";
+      function registerUser() {
+        const username = document.getElementById("registerUsername").value;
+        const password = document.getElementById("registerPassword").value;
+
+        fetch(`${apiUrl}/register`, {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        })
+          .then((response) => response.json())
+          .then((data) => alert(data.message))
+          .catch((error) => console.error("Error:", error));
+      }
+
+      function loginUser() {
+        const username = document.getElementById("loginUsername").value;
+        const password = document.getElementById("loginPassword").value;
+
+        fetch(`${apiUrl}/login`, {
+          method: "POST",
+          headers: {
+            Authorization: "Basic " + btoa(username + ":" + password),
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.token) {
+              sessionStorage.setItem("jwt", data.token);
+              alert("Login successful");
+            } else {
+              alert("Login failed");
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      function getProtected() {
+        const token = sessionStorage.getItem("jwt");
+        console.log("Token: " + token);
+        if (!token) {
+          alert("Please log in first");
+          return;
+        }
+
+        fetch(`${apiUrl}/protected`, {
+          method: "GET",
+          headers: {
+            "x-access-token": token,
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("protectedResponse").innerText =
+              data.message;
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+    </script>
+  </body>
+</html>
